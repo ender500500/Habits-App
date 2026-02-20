@@ -31,8 +31,10 @@
     <style>
         body { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         .transition-transform { transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
-        .check-transition { transition: all 0.2s ease-in-out; }
         ::-webkit-scrollbar { display: none; }
+        .active-tab { border-bottom: 3px solid #9d4edd; color: #f3e8ff !important; }
+        .bar-anim { transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        details summary::-webkit-details-marker { display: none; }
     </style>
 </head>
 <body class="bg-appBg text-textMain font-sans min-h-screen relative pb-24 overflow-x-hidden">
@@ -42,8 +44,8 @@
         <h1 class="text-3xl font-bold tracking-tight">Habits</h1>
         <button onclick="openModal('settings-modal')" class="p-2 text-textMuted hover:text-white transition-colors">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
         </button>
     </header>
@@ -61,51 +63,56 @@
     <!-- Dark Overlay -->
     <div id="modal-overlay" onclick="closeAllModals()" class="fixed inset-0 bg-black/80 z-30 hidden transition-opacity"></div>
 
-    <!-- Add/Edit Habit Menu -->
-    <div id="habit-modal" class="fixed bottom-0 left-0 right-0 bg-cardBg rounded-t-3xl z-40 transform translate-y-full transition-transform p-6 border-t border-primary/30 shadow-[0_-10px_40px_rgba(157,78,221,0.15)] max-h-[90vh] overflow-y-auto">
-        <div class="w-12 h-1.5 bg-textMuted/30 rounded-full mx-auto mb-6"></div>
-        <h2 id="modal-title" class="text-xl font-bold mb-4 text-primary">New Habit</h2>
-        
-        <input type="hidden" id="edit-id">
-        <input type="text" id="habit-name" placeholder="Habit Name (e.g., Drink Water)" class="w-full bg-appBg text-textMain border border-primary/30 rounded-xl p-4 mb-4 focus:outline-none focus:border-primary placeholder-textMuted/50">
-        <textarea id="habit-desc" placeholder="Description or 'Why' (Keep it long if you want!)" rows="3" class="w-full bg-appBg text-textMain border border-primary/30 rounded-xl p-4 mb-4 focus:outline-none focus:border-primary placeholder-textMuted/50"></textarea>
-        
-        <div class="bg-appBg border border-primary/30 rounded-xl p-4 mb-6">
-            <label class="block text-sm text-textMuted mb-2">Daily Target Number (e.g. 8 for 8 glasses)</label>
-            <input type="number" id="habit-target" placeholder="Leave empty for yes/no habit" class="w-full bg-transparent text-textMain focus:outline-none placeholder-textMuted/50 text-lg">
+    <!-- Plus Modal (Tabs: New Habit / Global Overview) -->
+    <div id="habit-modal" class="fixed bottom-0 left-0 right-0 bg-cardBg rounded-t-3xl z-40 transform translate-y-full transition-transform border-t border-primary/30 shadow-[0_-10px_40px_rgba(157,78,221,0.15)] max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-cardBg z-10 pt-4 px-6">
+            <div class="w-12 h-1.5 bg-textMuted/30 rounded-full mx-auto mb-4"></div>
+            <div class="flex gap-6 border-b border-primary/10 mb-6">
+                <button id="tab-btn-create" onclick="switchPlusTab('create')" class="pb-3 text-lg font-bold text-textMuted active-tab">Create</button>
+                <button id="tab-btn-overview" onclick="switchPlusTab('overview')" class="pb-3 text-lg font-bold text-textMuted">Overview</button>
+            </div>
         </div>
-        
-        <div class="flex gap-4">
-            <button onclick="closeAllModals()" class="flex-1 py-4 rounded-xl font-semibold text-textMuted bg-appBg border border-primary/20">Cancel</button>
-            <button onclick="saveHabitAction()" class="flex-1 py-4 rounded-xl font-semibold text-white bg-primary">Save Habit</button>
+
+        <!-- Tab 1: Create/Edit -->
+        <div id="tab-content-create" class="p-6 pt-0">
+            <h2 id="modal-title" class="text-sm font-bold mb-4 uppercase tracking-widest text-primary">New Habit</h2>
+            <input type="hidden" id="edit-id">
+            <input type="text" id="habit-name" placeholder="Name (e.g., Read Books)" class="w-full bg-appBg text-textMain border border-primary/30 rounded-xl p-4 mb-4 focus:outline-none focus:border-primary">
+            <textarea id="habit-desc" placeholder="Why are you doing this? (Description)" rows="3" class="w-full bg-appBg text-textMain border border-primary/30 rounded-xl p-4 mb-4 focus:outline-none focus:border-primary"></textarea>
+            <div class="bg-appBg border border-primary/30 rounded-xl p-4 mb-6">
+                <label class="block text-xs text-textMuted mb-2 uppercase font-bold">Daily Target Number</label>
+                <input type="number" id="habit-target" placeholder="Leave empty for yes/no" class="w-full bg-transparent text-textMain focus:outline-none text-lg">
+            </div>
+            <div class="flex gap-4">
+                <button onclick="closeAllModals()" class="flex-1 py-4 rounded-xl font-semibold text-textMuted bg-appBg border border-primary/20">Cancel</button>
+                <button onclick="saveHabitAction()" class="flex-1 py-4 rounded-xl font-semibold text-white bg-primary">Save</button>
+            </div>
+        </div>
+
+        <!-- Tab 2: Global Stats -->
+        <div id="tab-content-overview" class="p-6 pt-0 hidden">
+            <div id="global-stats-container"></div>
         </div>
     </div>
 
-    <!-- Settings Menu -->
-    <div id="settings-modal" class="fixed bottom-0 left-0 right-0 bg-cardBg rounded-t-3xl z-40 transform translate-y-full transition-transform p-6 border-t border-primary/30 shadow-[0_-10px_40px_rgba(157,78,221,0.15)]">
-        <div class="w-12 h-1.5 bg-textMuted/30 rounded-full mx-auto mb-6"></div>
-        <h2 class="text-xl font-bold mb-6">Settings & Backup</h2>
-        
-        <div class="space-y-4 mb-6">
-            <button onclick="exportData()" class="w-full py-4 rounded-xl font-semibold text-white bg-appBg border border-primary/40 flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                Export Data (Backup)
-            </button>
-            
-            <label class="w-full py-4 rounded-xl font-semibold text-white bg-appBg border border-primary/40 flex items-center justify-center gap-2 cursor-pointer">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                Import Data (Restore)
-                <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
-            </label>
-        </div>
-        <button onclick="closeAllModals()" class="w-full py-4 rounded-xl font-semibold text-textMuted bg-appBg border border-primary/20">Close</button>
-    </div>
-
-    <!-- Stats & Description Menu -->
+    <!-- Individual Stats Modal -->
     <div id="stats-modal" class="fixed bottom-0 left-0 right-0 bg-cardBg rounded-t-3xl z-40 transform translate-y-full transition-transform p-6 border-t border-primary/30 shadow-[0_-10px_40px_rgba(157,78,221,0.15)] max-h-[90vh] overflow-y-auto">
         <div class="w-12 h-1.5 bg-textMuted/30 rounded-full mx-auto mb-6"></div>
         <div id="stats-content"></div>
         <button onclick="closeAllModals()" class="w-full mt-6 py-4 rounded-xl font-semibold text-white bg-primary">Close</button>
+    </div>
+
+    <!-- Settings Menu -->
+    <div id="settings-modal" class="fixed bottom-0 left-0 right-0 bg-cardBg rounded-t-3xl z-40 transform translate-y-full transition-transform p-6 border-t border-primary/30">
+        <div class="w-12 h-1.5 bg-textMuted/30 rounded-full mx-auto mb-6"></div>
+        <h2 class="text-xl font-bold mb-6">Backup & Restore</h2>
+        <div class="space-y-4 mb-6">
+            <button onclick="exportData()" class="w-full py-4 rounded-xl font-semibold text-white bg-appBg border border-primary/40 flex items-center justify-center gap-2">Export .JSON</button>
+            <label class="w-full py-4 rounded-xl font-semibold text-white bg-appBg border border-primary/40 flex items-center justify-center gap-2 cursor-pointer">
+                Import .JSON <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
+            </label>
+        </div>
+        <button onclick="closeAllModals()" class="w-full py-4 rounded-xl font-semibold text-textMuted bg-appBg border border-primary/20">Close</button>
     </div>
 
     <script>
@@ -123,174 +130,192 @@
             localStorage.setItem('my_habits', JSON.stringify(habits));
         }
 
-        function exportData() {
-            const dataStr = JSON.stringify(habits);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `habits-backup-${getTodayString()}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        // --- Navigation Logic ---
+        function switchPlusTab(tab) {
+            document.getElementById('tab-btn-create').classList.toggle('active-tab', tab === 'create');
+            document.getElementById('tab-btn-overview').classList.toggle('active-tab', tab === 'overview');
+            document.getElementById('tab-content-create').classList.toggle('hidden', tab !== 'create');
+            document.getElementById('tab-content-overview').classList.toggle('hidden', tab !== 'overview');
+            if (tab === 'overview') renderGlobalStats();
         }
 
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) {
-                        habits = imported;
-                        saveToStorage();
-                        renderHabits();
-                        closeAllModals();
-                    }
-                } catch (err) { alert("Invalid file."); }
-            };
-            reader.readAsText(file);
+        function changeMonth(offset) {
+            currentMonth += offset;
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            else if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            renderStatsContent();
         }
 
-        // --- Core Rendering ---
+        // --- Global Stats Logic ---
+        function renderGlobalStats() {
+            const container = document.getElementById('global-stats-container');
+            if (habits.length === 0) {
+                container.innerHTML = `<p class="text-center text-textMuted py-10">Add habits to see progress!</p>`;
+                return;
+            }
+
+            // 1. Weekly Breakdown (Clickable Weeks)
+            let weeklyBreakdownHtml = '<h3 class="text-xs font-bold text-textMuted uppercase mb-3 tracking-widest">Weekly Progress</h3><div class="space-y-2 mb-8">';
+            for (let i = 0; i < 4; i++) {
+                const startOfWeek = new Date();
+                startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() + (i * 7)));
+                
+                let weekCompletions = 0;
+                let dayDots = '';
+                for (let d = 0; d < 7; d++) {
+                    const current = new Date(startOfWeek);
+                    current.setDate(current.getDate() + d);
+                    const dStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+                    const doneCount = habits.filter(h => h.history.includes(dStr)).length;
+                    weekCompletions += doneCount;
+                    const dotColor = doneCount === habits.length ? 'bg-primary' : (doneCount > 0 ? 'bg-primary/40' : 'bg-white/5');
+                    dayDots += `<div class="w-1.5 h-1.5 rounded-full ${dotColor}"></div>`;
+                }
+
+                weeklyBreakdownHtml += `
+                    <details class="group bg-appBg border border-primary/10 rounded-xl overflow-hidden">
+                        <summary class="list-none p-4 flex justify-between items-center cursor-pointer active:bg-primary/5">
+                            <span class="text-sm font-medium">Week of ${startOfWeek.toLocaleDateString('en', {month:'short', day:'numeric'})}</span>
+                            <div class="flex items-center gap-3">
+                                <div class="flex gap-1">${dayDots}</div>
+                                <svg class="w-4 h-4 text-textMuted group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                        </summary>
+                        <div class="px-4 pb-4 space-y-2 border-t border-primary/5 pt-3">
+                            ${generateWeekDetail(startOfWeek)}
+                        </div>
+                    </details>
+                `;
+            }
+            weeklyBreakdownHtml += '</div>';
+
+            // 2. Monthly Progress (Clickable Bars)
+            let monthlyChartHtml = '<h3 class="text-xs font-bold text-textMuted uppercase mb-3 tracking-widest">Monthly Progress</h3><div class="flex justify-between items-end h-32 gap-2 bg-appBg p-4 rounded-2xl border border-primary/10 mb-4">';
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date();
+                d.setMonth(d.getMonth() - i);
+                const m = d.getMonth();
+                const y = d.getFullYear();
+                const mName = d.toLocaleString('default', { month: 'short' });
+                
+                const totalCompletions = habits.reduce((acc, h) => {
+                    return acc + h.history.filter(date => {
+                        const [dy, dm] = date.split('-').map(Number);
+                        return dy === y && dm === (m + 1);
+                    }).length;
+                }, 0);
+
+                const maxPossible = habits.length * new Date(y, m + 1, 0).getDate();
+                const height = maxPossible > 0 ? (totalCompletions / maxPossible) * 100 : 0;
+
+                monthlyChartHtml += `
+                    <div class="flex-1 flex flex-col items-center gap-2 h-full group cursor-pointer" onclick="showMonthDetail(${m}, ${y}, ${totalCompletions})">
+                        <div class="w-full bg-primary/10 rounded-t-md relative flex items-end h-full overflow-hidden">
+                            <div class="bg-primary w-full bar-anim group-hover:bg-primary/80" style="height: ${height}%"></div>
+                        </div>
+                        <span class="text-[10px] text-textMuted font-bold">${mName}</span>
+                    </div>
+                `;
+            }
+            monthlyChartHtml += '</div><div id="month-detail-area" class="text-center text-xs text-textMuted italic">Click a bar to see month stats</div>';
+
+            container.innerHTML = weeklyBreakdownHtml + monthlyChartHtml;
+        }
+
+        function generateWeekDetail(startDate) {
+            let html = '';
+            for (let d = 0; d < 7; d++) {
+                const current = new Date(startDate);
+                current.setDate(current.getDate() + d);
+                const dStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+                const doneCount = habits.filter(h => h.history.includes(dStr)).length;
+                html += `
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-textMuted">${current.toLocaleDateString('en', {weekday:'long', day:'numeric'})}</span>
+                        <span class="font-bold text-primary">${doneCount} / ${habits.length} Done</span>
+                    </div>
+                `;
+            }
+            return html;
+        }
+
+        function showMonthDetail(m, y, count) {
+            const mName = new Date(y, m).toLocaleString('default', { month: 'long' });
+            const area = document.getElementById('month-detail-area');
+            
+            // Calculate Perfect Days for that month
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+            let perfectDays = 0;
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                if (habits.length > 0 && habits.every(h => h.history.includes(dStr))) perfectDays++;
+            }
+
+            area.innerHTML = `
+                <div class="bg-primary/5 border border-primary/20 p-4 rounded-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div class="text-sm font-bold text-textMain mb-1">${mName} ${y}</div>
+                    <div class="flex justify-around mt-2">
+                        <div><div class="text-lg font-bold text-primary">${count}</div><div class="text-[10px] uppercase">Completions</div></div>
+                        <div><div class="text-lg font-bold text-primary">${perfectDays}</div><div class="text-[10px] uppercase">Perfect Days</div></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- Habit List & Interaction ---
         function renderHabits() {
             const list = document.getElementById('habit-list');
             list.innerHTML = '';
             const today = getTodayString();
 
-            if (habits.length === 0) {
-                list.innerHTML = '<p class="text-textMuted text-center mt-10 opacity-50">No habits yet. Tap + to start!</p>';
-                return;
-            }
-
             habits.forEach(habit => {
-                if (habit.lastUpdated !== today) {
-                    habit.progress = 0;
-                    habit.lastUpdated = today;
-                }
-
+                if (habit.lastUpdated !== today) { habit.progress = 0; habit.lastUpdated = today; }
                 const isDone = habit.history.includes(today);
-                const streak = getStreak(habit.history);
                 const isCounter = habit.type === 'counter';
-
-                // CHECKMARK OR 1/3 UI
-                let circleContent = '';
-                if (isDone) {
-                    circleContent = `<svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`;
-                } else if (isCounter) {
-                    circleContent = `
-                        <div class="flex flex-col items-center justify-center leading-none">
-                            <span class="text-sm font-bold">${habit.progress}</span>
-                            <div class="w-4 h-[1px] bg-primary/40 my-0.5"></div>
-                            <span class="text-[10px] opacity-60">${habit.target}</span>
-                        </div>
-                    `;
-                }
+                
+                let circleContent = isDone ? `<svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" /></svg>` 
+                                           : (isCounter ? `<div class="text-[10px] font-bold leading-tight">${habit.progress}<br><span class="opacity-40 border-t border-white/20 px-1">${habit.target}</span></div>` : '');
 
                 const habitEl = document.createElement('div');
-                habitEl.className = `bg-cardBg p-4 rounded-2xl border ${isDone ? 'border-primary' : 'border-primary/20'} flex items-center gap-4 relative overflow-hidden transition-all`;
+                habitEl.className = `bg-cardBg p-4 rounded-2xl border ${isDone ? 'border-primary' : 'border-primary/20'} flex items-center gap-4 relative overflow-hidden`;
                 
-                let progressPercent = isCounter ? (habit.progress / habit.target) * 100 : 0;
-
                 habitEl.innerHTML = `
-                    ${isCounter && !isDone ? `<div class="absolute left-0 bottom-0 h-1 bg-primary/40 transition-all" style="width: ${progressPercent}%"></div>` : ''}
-                    
-                    <button onclick="interactHabit('${habit.id}')" class="w-12 h-12 rounded-full border-2 border-primary flex-shrink-0 flex items-center justify-center ${isDone ? 'bg-primary' : ''} active:scale-90 transition-all">
-                        ${circleContent}
-                    </button>
-                    
+                    ${isCounter && !isDone ? `<div class="absolute left-0 bottom-0 h-1 bg-primary/40 transition-all" style="width: ${(habit.progress/habit.target)*100}%"></div>` : ''}
+                    <button onclick="interactHabit('${habit.id}')" class="w-12 h-12 rounded-full border-2 border-primary flex-shrink-0 flex items-center justify-center ${isDone ? 'bg-primary' : ''} active:scale-90 transition-all">${circleContent}</button>
                     <div class="flex-1 min-w-0" onclick="openStats('${habit.id}')">
                         <div class="flex items-center gap-2">
                             <h2 class="font-bold truncate ${isDone ? 'text-textMuted line-through' : ''}">${habit.name}</h2>
-                            ${streak > 0 ? `<span class="text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full">🔥 ${streak}</span>` : ''}
+                            ${getStreak(habit.history) > 0 ? `<span class="text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full">🔥 ${getStreak(habit.history)}</span>` : ''}
                         </div>
                         <p class="text-xs text-textMuted truncate">${habit.desc || 'Tap for details'}</p>
                     </div>
-                    
-                    <div class="flex gap-1">
-                        <button onclick="prepareEditModal('${habit.id}')" class="p-2 text-textMuted/40 hover:text-primary active:scale-90 transition-all">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                        </button>
-                    </div>
+                    <button onclick="prepareEditModal('${habit.id}')" class="p-2 text-textMuted/40 active:scale-90">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    </button>
                 `;
                 list.appendChild(habitEl);
             });
             saveToStorage();
         }
 
-        // --- Modals Logic ---
-        function prepareAddModal() {
-            document.getElementById('modal-title').innerText = "New Habit";
-            document.getElementById('edit-id').value = "";
-            document.getElementById('habit-name').value = "";
-            document.getElementById('habit-desc').value = "";
-            document.getElementById('habit-target').value = "";
-            openModal('habit-modal');
-        }
-
-        function prepareEditModal(id) {
-            const habit = habits.find(h => h.id === id);
-            if (!habit) return;
-            document.getElementById('modal-title').innerText = "Edit Habit";
-            document.getElementById('edit-id').value = habit.id;
-            document.getElementById('habit-name').value = habit.name;
-            document.getElementById('habit-desc').value = habit.desc;
-            document.getElementById('habit-target').value = habit.target || "";
-            openModal('habit-modal');
-        }
-
-        function saveHabitAction() {
-            const id = document.getElementById('edit-id').value;
-            const name = document.getElementById('habit-name').value.trim();
-            const desc = document.getElementById('habit-desc').value.trim();
-            const targetVal = document.getElementById('habit-target').value;
-            
-            if (!name) return;
-            const isCounter = targetVal !== '' && !isNaN(targetVal) && Number(targetVal) > 0;
-
-            if (id) {
-                const idx = habits.findIndex(h => h.id === id);
-                habits[idx].name = name;
-                habits[idx].desc = desc;
-                habits[idx].type = isCounter ? 'counter' : 'boolean';
-                habits[idx].target = isCounter ? Number(targetVal) : null;
-            } else {
-                habits.push({
-                    id: Date.now().toString(),
-                    name, desc,
-                    type: isCounter ? 'counter' : 'boolean',
-                    target: isCounter ? Number(targetVal) : null,
-                    progress: 0, history: [], lastUpdated: getTodayString()
-                });
-            }
-            renderHabits();
-            closeAllModals();
-        }
-
         function interactHabit(id) {
-            const habit = habits.find(h => h.id === id);
-            const today = getTodayString();
-            const isDone = habit.history.includes(today);
-
-            if (habit.type === 'boolean') {
-                if (isDone) habit.history = habit.history.filter(d => d !== today);
-                else habit.history.push(today);
+            const h = habits.find(x => x.id === id);
+            const t = getTodayString();
+            if (h.history.includes(t)) {
+                h.history = h.history.filter(d => d !== t); h.progress = 0;
             } else {
-                if (!isDone) {
-                    habit.progress++;
-                    if (habit.progress >= habit.target) habit.history.push(today);
-                } else {
-                    habit.progress = 0;
-                    habit.history = habit.history.filter(d => d !== today);
-                }
+                if (h.type === 'counter') {
+                    h.progress++; if (h.progress >= h.target) h.history.push(t);
+                } else { h.history.push(t); }
             }
             renderHabits();
         }
 
-        // --- Stats & Detail View ---
+        // --- Individual Stats Modal ---
         function openStats(id) {
             currentViewedHabitId = id;
+            currentMonth = new Date().getMonth();
+            currentYear = new Date().getFullYear();
             renderStatsContent();
             openModal('stats-modal');
         }
@@ -310,84 +335,92 @@
             for (let i = 1; i <= daysInMonth; i++) {
                 const dStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
                 const done = habit.history.includes(dStr);
-                calHtml += `<div class="aspect-square rounded flex items-center justify-center text-xs ${done ? 'bg-primary text-white font-bold' : 'bg-appBg border border-primary/10 text-textMuted'}">${i}</div>`;
+                const isToday = dStr === getTodayString();
+                calHtml += `<div class="aspect-square rounded flex items-center justify-center text-xs ${done ? 'bg-primary text-white font-bold' : (isToday ? 'border border-primary text-primary' : 'bg-appBg border border-primary/5 text-textMuted')}">${i}</div>`;
             }
             calHtml += `</div>`;
 
             content.innerHTML = `
-                <div class="mb-6">
-                    <h2 class="text-3xl font-bold text-white mb-2">${habit.name}</h2>
-                    ${habit.desc ? `<div class="bg-primary/10 border border-primary/20 p-4 rounded-2xl text-textMain text-sm leading-relaxed whitespace-pre-wrap">${habit.desc}</div>` : ''}
+                <h2 class="text-2xl font-bold mb-2">${habit.name}</h2>
+                ${habit.desc ? `<div class="bg-primary/5 border border-primary/10 p-4 rounded-xl text-sm leading-relaxed mb-6 whitespace-pre-wrap text-textMain/90">${habit.desc}</div>` : ''}
+                
+                <div class="flex justify-between items-center mb-4">
+                    <button onclick="changeMonth(-1)" class="p-2 text-primary">&larr;</button>
+                    <span class="font-bold">${monthName} ${currentYear}</span>
+                    <button onclick="changeMonth(1)" class="p-2 text-primary">&rarr;</button>
                 </div>
-
-                <div class="grid grid-cols-2 gap-3 mb-6">
-                    <div class="bg-appBg p-4 rounded-2xl border border-primary/20 text-center">
-                        <div class="text-2xl font-bold">🔥 ${getStreak(habit.history)}</div>
-                        <div class="text-[10px] text-textMuted uppercase tracking-widest mt-1">Current Streak</div>
+                <div class="bg-appBg p-4 rounded-2xl border border-primary/10 mb-6">${calHtml}</div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-appBg p-4 rounded-2xl border border-primary/10 text-center">
+                        <div class="text-xl font-bold">🔥 ${getStreak(habit.history)}</div>
+                        <div class="text-[10px] uppercase text-textMuted">Streak</div>
                     </div>
-                    <div class="bg-appBg p-4 rounded-2xl border border-primary/20 text-center">
-                        <div class="text-2xl font-bold">🏆 ${getLongestStreak(habit.history)}</div>
-                        <div class="text-[10px] text-textMuted uppercase tracking-widest mt-1">Best Streak</div>
-                    </div>
+                    <button onclick="deleteHabit('${habit.id}')" class="bg-red-500/10 p-4 rounded-2xl border border-red-500/20 text-center text-red-400 font-bold text-sm">Delete</button>
                 </div>
-
-                <div class="bg-appBg p-4 rounded-2xl border border-primary/20">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="font-bold text-primary">${monthName} ${currentYear}</span>
-                    </div>
-                    ${calHtml}
-                </div>
-
-                <button onclick="deleteHabit('${habit.id}')" class="w-full mt-8 py-3 rounded-xl text-red-400 text-sm font-medium border border-red-400/20 bg-red-400/5">
-                    Delete Habit
-                </button>
             `;
         }
 
-        // --- Helper Calculations ---
-        function getStreak(history) {
-            if (!history.length) return 0;
-            let streak = 0;
-            let checkDate = new Date();
-            const todayStr = getTodayString();
-            if (!history.includes(todayStr)) checkDate.setDate(checkDate.getDate() - 1);
-            while (true) {
-                const dStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
-                if (history.includes(dStr)) { streak++; checkDate.setDate(checkDate.getDate() - 1); }
-                else break;
-            }
-            return streak;
+        // --- Action Functions ---
+        function prepareAddModal() {
+            switchPlusTab('create');
+            document.getElementById('modal-title').innerText = "New Habit";
+            document.getElementById('edit-id').value = "";
+            document.getElementById('habit-name').value = "";
+            document.getElementById('habit-desc').value = "";
+            document.getElementById('habit-target').value = "";
+            openModal('habit-modal');
         }
 
-        function getLongestStreak(history) {
-            if (!history.length) return 0;
-            const sorted = [...new Set(history)].sort();
-            let max = 0, current = 1;
-            for (let i = 1; i < sorted.length; i++) {
-                const diff = (new Date(sorted[i]) - new Date(sorted[i-1])) / (1000*60*60*24);
-                if (diff === 1) current++;
-                else { max = Math.max(max, current); current = 1; }
+        function prepareEditModal(id) {
+            const h = habits.find(x => x.id === id);
+            switchPlusTab('create');
+            document.getElementById('modal-title').innerText = "Edit Habit";
+            document.getElementById('edit-id').value = h.id;
+            document.getElementById('habit-name').value = h.name;
+            document.getElementById('habit-desc').value = h.desc;
+            document.getElementById('habit-target').value = h.target || "";
+            openModal('habit-modal');
+        }
+
+        function saveHabitAction() {
+            const id = document.getElementById('edit-id').value;
+            const name = document.getElementById('habit-name').value.trim();
+            const desc = document.getElementById('habit-desc').value.trim();
+            const target = document.getElementById('habit-target').value;
+            if (!name) return;
+            const isCounter = target !== '' && Number(target) > 0;
+
+            if (id) {
+                const h = habits.find(x => x.id === id);
+                h.name = name; h.desc = desc; h.type = isCounter ? 'counter' : 'boolean'; h.target = isCounter ? Number(target) : null;
+            } else {
+                habits.push({ id: Date.now().toString(), name, desc, type: isCounter ? 'counter' : 'boolean', target: isCounter ? Number(target) : null, progress: 0, history: [], lastUpdated: getTodayString() });
             }
-            return Math.max(max, current);
+            renderHabits(); closeAllModals();
         }
 
         function deleteHabit(id) {
-            if (confirm("Permanently delete this habit?")) {
-                habits = habits.filter(h => h.id !== id);
-                closeAllModals();
-                renderHabits();
-            }
+            if (confirm("Delete this habit?")) { habits = habits.filter(x => x.id !== id); renderHabits(); closeAllModals(); }
         }
 
+        function getStreak(hist) {
+            let s = 0; let d = new Date(); if (!hist.includes(getTodayString())) d.setDate(d.getDate()-1);
+            while(hist.includes(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`)) { s++; d.setDate(d.getDate()-1); }
+            return s;
+        }
+
+        // --- Modal Helpers ---
         function openModal(id) {
             document.getElementById('modal-overlay').classList.remove('hidden');
             setTimeout(() => document.getElementById(id).classList.remove('translate-y-full'), 10);
         }
-
         function closeAllModals() {
             document.querySelectorAll('[id$="-modal"]').forEach(m => m.classList.add('translate-y-full'));
             setTimeout(() => document.getElementById('modal-overlay').classList.add('hidden'), 300);
         }
+        function exportData() { const blob = new Blob([JSON.stringify(habits)], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "habits.json"; a.click(); }
+        function importData(e) { const fr = new FileReader(); fr.onload = (x) => { habits = JSON.parse(x.target.result); renderHabits(); closeAllModals(); }; fr.readAsText(e.target.files[0]); }
 
         renderHabits();
     </script>
